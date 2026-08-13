@@ -1,0 +1,13 @@
+langchain-openai
+langchain-community
+langchain-chroma
+fastapi
+uvicorn
+pydantic
+python-dotenv
+langchain
+langchain-core
+langchain-classic
+langchain-unstructured
+unstructured-client
+unstructured "unstructured[pdf]" python-magic
