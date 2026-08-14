@@ -4,7 +4,7 @@ from utils.loaders import file_loader
 from utils.vectorstore import create_vectorstore
 from utils.rag_chain import ask_question
 from pydantic import BaseModel
-
+import uvicorn
 
 app = FastAPI(title="NexusRAG")
 
@@ -16,7 +16,7 @@ app.add_middleware(
     allow_credentials=True
 )
 
-class get_question(BaseModel):
+class QueryInfo(BaseModel):
     question:str
     file_name:str
 
@@ -37,9 +37,11 @@ def rag_process(contents,file_name):
     return {"message":"file processing"}
 
 @app.get("/upload/question")
-async def get_question(request.question,request.file_name):
-    answer = ask_question(request.question,request.file_name)
-    return {"message":answer}
+async def get_question(question: str, file_name: str):
+    answer = ask_question(question, file_name)
+    return {"message": answer}
 
 
 
+if __name__ == "__main__":
+    uvicorn.run(app,host="localhost",port=8000)
