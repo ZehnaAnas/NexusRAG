@@ -9,7 +9,7 @@ system_prompt = (
 prompt = ChatPromptTemplate.from_messages(
     [
     ("system",system_prompt),
-    MessagesPlaceholder("history"),
+    MessagesPlaceholder("chat_history"),
     ("human","{input}")
     ]
 )

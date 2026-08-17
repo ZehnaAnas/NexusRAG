@@ -5,4 +5,4 @@ def keyword(docs):
     chunks = split_text(docs)
     ks = BM25Retriever.from_documents(chunks)
     ks.k = 3
-    return
+    return ks

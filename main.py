@@ -24,14 +24,14 @@ class QueryInfo(BaseModel):
     question:str
     file_name:str
 
-@app.post("/")
+@app.get("/")
 async def root():
     return {"message":"SUCCESS"}
 
 @app.post("/upload/file")
 async def get_file(file:UploadFile,background_tasks:BackgroundTasks):
     try:
-        file_name = str(file)
+        file_name = file.filename
         contents = await file.read()
         file_status[file_name] = "processing"
         background_tasks.add_task(rag_process,contents,file_name)
@@ -56,13 +56,13 @@ async def get_status(file_name:str):
     status = file_status.get(file_name,"unknown")
     return {"file_name":file_name,"status":status}
 
-@app.get("/upload/question")
+@app.post("/upload/question")
 async def get_question(request:QueryInfo):
     try:
         answer = ask_question(request.question, request.file_name)
         return {"message": answer}
     except Exception as e:
-        raise HTTPException(status_code=500,detail = e)
+        raise HTTPException(status_code=500,detail = str(e))
 
 if __name__ == "__main__":
     uvicorn.run(app,host="localhost",port=8000)

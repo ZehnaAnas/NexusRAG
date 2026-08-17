@@ -9,9 +9,9 @@ import tiktoken
 
 load_dotenv()
 
-def token_length(pdf):
-    tokeniser = tiktoken.get_encoding(encoding_name="cl100k-base")
-    tokens = tokeniser.encode(pdf)
+def token_length(file):
+    tokeniser = tiktoken.get_encoding(encoding_name="cl100k_base")
+    tokens = tokeniser.encode(file)
     token_len = len(tokens)
     return token_len
 
@@ -25,21 +25,22 @@ def get_embeddings():
     )
     return embeddings
 
-def split_text(pdf):
+def split_text(file):
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size = CHUNK_SIZE,
         chunk_overlap = CHUNK_OVERLAP,
         length_function = token_length,
         separators=["\n\n","\n"," ",""]
     )
-    chunks = text_splitter.split_documents(pdf)
+    chunks = text_splitter.split_documents(file)
     return chunks
 
-def create_vectorstore(pdf,pdf_name):
-    file_name = pdf_name.removesuffix(".pdf")
+def create_vectorstore(file,file_name):
+    doc_name = str(file_name)
+    docs = doc_name.split(".")[0]
     vs = Chroma.from_documents(
-        documents=split_text(pdf),
+        documents=split_text(file),
         embedding=get_embeddings(),
-        persist_directory=f"{VECTORSTORE_DIR}/{file_name}"
+        persist_directory=f"{VECTORSTORE_DIR}/{docs}"
     )
     return vs

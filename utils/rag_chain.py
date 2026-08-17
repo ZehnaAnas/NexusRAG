@@ -1,4 +1,4 @@
-from langchain_classic.retrievers import create_retrieval_chain, create_history_aware_retriever
+from langchain_classic.chains import create_retrieval_chain, create_history_aware_retriever
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 from langchain_chroma import Chroma
 from langchain_community.chat_message_histories import ChatMessageHistory
@@ -47,7 +47,7 @@ def rag(file_name):
         docs = file.read()
     chunks = file_loader(file_name,docs)
 
-    keyword_retriever = keyword(docs)
+    keyword_retriever = keyword(chunks)
     hybrid_retriever = EnsembleRetriever(retrievers=[vs_retriever,keyword_retriever],weights=[0.5,0.5])
     compressor = CohereRerank(cohere_api_key=api_key,model="rerank-english-v3.0")
     rerank_retriever = ContextualCompressionRetriever(base_compressor=compressor,base_retriever=hybrid_retriever)
