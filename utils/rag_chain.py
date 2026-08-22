@@ -16,6 +16,7 @@ from utils.loaders import file_loader
 import os
 from dotenv import load_dotenv
 from pydantic import SecretStr
+from unstructured.chunking.title import chunk_by_title
 
 load_dotenv()
 store = {}
@@ -47,7 +48,7 @@ def rag(file_name):
         docs = file.read()
     chunks = file_loader(file_name,docs)
 
-    keyword_retriever = keyword(chunks)
+    keyword_retriever = keyword(chunks,file_name)
     hybrid_retriever = EnsembleRetriever(retrievers=[vs_retriever,keyword_retriever],weights=[0.5,0.5])
     compressor = CohereRerank(cohere_api_key=api_key,model="rerank-english-v3.0")
     rerank_retriever = ContextualCompressionRetriever(base_compressor=compressor,base_retriever=hybrid_retriever)
