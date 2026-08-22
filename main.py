@@ -4,6 +4,7 @@ from utils.loaders import file_loader
 from utils.vectorstore import create_vectorstore
 from utils.keywordstore import keyword
 from utils.rag_chain import ask_question
+from utils.db import init_db, set_status, get_status as db_get_status
 import traceback
 from pydantic import BaseModel
 import uvicorn
@@ -18,7 +19,10 @@ app.add_middleware(
     allow_credentials=True
 )
 
-file_status = {}
+# Runs once when the app boots: makes sure the table exists.
+# Safe to call every time - it won't erase existing data.
+
+init_db()
 
 class QueryInfo(BaseModel):
     question:str
@@ -33,7 +37,7 @@ async def get_file(file:UploadFile,background_tasks:BackgroundTasks):
     try:
         file_name = file.filename
         contents = await file.read()
-        file_status[file_name] = "processing"
+        set_status(str(file_name),"processing")
         background_tasks.add_task(rag_process,contents,file_name)
         return {"message":file_name,"status":"processing"}
     except Exception as e:
@@ -43,18 +47,18 @@ def rag_process(contents,file_name):
     try:
         file = file_loader(file_name,contents)
         if not file:
-            file_status[file_name] = "Failed: no supported files found"
+            set_status(file_name,"failed",error="Failed: no supported files found")
             return
         create_vectorstore(file,file_name)
         keyword(file)
-        file_status[file_name] = "completed"
+        set_status(file_name, "completed")
     except Exception as e:
         print(f"Error while trying to process {traceback.format_exc()}, Exception: {e}")
+        set_status(file_name,"failed",error=str(e))
 
 @app.get("/upload/status/{file_name}")
 async def get_status(file_name:str):
-    status = file_status.get(file_name,"unknown")
-    return {"file_name":file_name,"status":status}
+    return db_get_status(file_name)
 
 @app.post("/upload/question")
 async def get_question(request:QueryInfo):
