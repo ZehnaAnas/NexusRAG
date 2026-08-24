@@ -1,6 +1,14 @@
 // Base URL of your FastAPI server (utils/main.py -> uvicorn.run(app, host="localhost", port=8000))
 const BASE_URL = "http://localhost:8000";
 
+// Every protected endpoint now requires this header. Set it via a
+// .env file (VITE_API_KEY=<the key create_api_key.py printed you>)
+// so it's never hardcoded into your source code. Vite only exposes
+// env vars prefixed with VITE_ to the browser.
+const API_KEY = import.meta.env.VITE_API_KEY;
+
+const authHeaders = () => ({ "X-API-Key": API_KEY });
+
 /**
  * Uploads a file to the RAG backend.
  * NOTE: this assumes the backend fix below (main.py) is applied, so the
@@ -12,6 +20,7 @@ export async function uploadFile(file) {
 
   const res = await fetch(`${BASE_URL}/upload/file`, {
     method: "POST",
+    headers: authHeaders(),
     body: formData,
   });
 
@@ -27,7 +36,8 @@ export async function uploadFile(file) {
  */
 export async function getStatus(fileName) {
   const res = await fetch(
-    `${BASE_URL}/upload/status/${encodeURIComponent(fileName)}`
+    `${BASE_URL}/upload/status/${encodeURIComponent(fileName)}`,
+    { headers: authHeaders() }
   );
   if (!res.ok) throw new Error("Could not fetch status");
   return res.json(); // { file_name, status }
@@ -42,7 +52,7 @@ export async function getStatus(fileName) {
 export async function askQuestion(question, fileName) {
   const res = await fetch(`${BASE_URL}/upload/question`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({ question, file_name: fileName }),
   });
   if (!res.ok) {
