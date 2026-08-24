@@ -1,0 +1,21 @@
+# Never bake secrets into the image -- they get passed in at runtime instead.
+.env
+.env.*
+
+# Local Python environments -- the image builds its own inside the container.
+venv/
+__pycache__/
+*.pyc
+
+# Local data: your uploaded files, vectorstores, and SQLite database.
+# These should live in a mounted VOLUME (see docker-compose.yml), not
+# be frozen into the image at build time.
+utils/data/
+
+# Version control and editor noise -- irrelevant inside the container.
+.git/
+.gitignore
+.vscode/
+
+# The frontend has its own build process / own container.
+frontend/node_modules/

@@ -1,0 +1,39 @@
+# docker-compose lets you describe your WHOLE stack (backend,
+# frontend, and later things like Redis or Postgres) in one file, and
+# bring it all up with one command: `docker compose up`.
+#
+# Secrets: this file reads OPENAI_API_KEY / COHERE_API_KEY /
+# UNSTRUCTURED_API_KEY from a .env file sitting NEXT TO this
+# docker-compose.yml (create one from .env.example). Docker Compose
+# loads that automatically — nothing here contains a real secret.
+
+services:
+  backend:
+    build: .              # use the Dockerfile in this directory
+    ports:
+      - "8000:8000"       # host_port:container_port
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - COHERE_API_KEY=${COHERE_API_KEY}
+      - UNSTRUCTURED_API_KEY=${UNSTRUCTURED_API_KEY}
+    volumes:
+      # THIS is the important line: without it, your SQLite database,
+      # uploaded files, and vectorstores would live only INSIDE the
+      # container's filesystem — which is just as temporary as the
+      # RAM dictionaries from gap #1. Delete or rebuild the container
+      # and all of it is gone. Mounting a volume here maps a real
+      # folder on your machine (./utils/data) to a folder inside the
+      # container, so the data survives container restarts, rebuilds,
+      # and `docker compose down`.
+      - ./utils/data:/app/utils/data
+
+  frontend:
+    image: node:20-slim
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "5173:5173"
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    depends_on:
+      - backend

@@ -11,6 +11,8 @@ langchain-core
 langchain-classic
 langchain-unstructured
 unstructured-client
-unstructured "unstructured[all-docs]" python-magic
+unstructured[all-docs]
+python-magic
 rank_bm25
 sqlalchemy
+python-multipart
