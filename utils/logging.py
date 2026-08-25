@@ -32,7 +32,7 @@ _STANDARD_FIELDS = {
     "funcName", "levelname", "levelno", "lineno", "module", "msecs",
     "message", "msg", "name", "pathname", "process", "processName",
     "relativeCreated", "stack_info", "thread", "threadName", "taskName",
-}
+} 
 
 
 class JSONFormatter(logging.Formatter):

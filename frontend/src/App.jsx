@@ -28,7 +28,7 @@ export default function App() {
         setFiles((prev) =>
           prev.map((f) => (f.name === fileName ? { ...f, status } : f))
         );
-        if (status === "completed" || status?.startsWith("Failed")) {
+        if (status === "completed" || status === "failed") {
           clearInterval(pollTimers.current[fileName]);
           delete pollTimers.current[fileName];
         }

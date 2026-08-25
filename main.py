@@ -75,7 +75,7 @@ async def get_file(file:UploadFile,background_tasks:BackgroundTasks,owner:str=De
     contents = await file.read()
 
     try:
-        safe_file_name = validate_filename(file.filename)
+        safe_file_name = validate_filename(str(file.filename))
         validate_file_size(contents)
     except UploadValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))

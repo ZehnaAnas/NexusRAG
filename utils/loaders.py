@@ -1,9 +1,10 @@
 import os
 from dotenv import load_dotenv
-load_dotenv()
 from langchain_unstructured import UnstructuredLoader
 from utils.config import UPLOAD_DIR
 import os
+
+load_dotenv()
 
 UNSTRUCTURED_API_KEY = os.getenv("UNSTRUCTURED_API_KEY")
 

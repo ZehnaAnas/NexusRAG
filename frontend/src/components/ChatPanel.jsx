@@ -17,6 +17,7 @@ export default function ChatPanel({
   const scrollRef = useRef(null);
   const fileInputRef = useRef(null);
   const isReady = activeFile?.status === "completed";
+  const isFailed = activeFile?.status === "failed";
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -86,7 +87,14 @@ export default function ChatPanel({
       </header>
 
       <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-6">
-        {!isReady && (
+        {isFailed && (
+          <div className="flex items-center gap-2 rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-base text-ink">
+            <Sparkles size={18} />
+            This document couldn't be processed. Try uploading it again, or
+            try a different file.
+          </div>
+        )}
+        {!isReady && !isFailed && (
           <div className="flex items-center gap-2 rounded-2xl border border-amber/30 bg-amber-light px-4 py-3 text-base text-ink">
             <Sparkles size={18} />
             Still reading through this document — you can ask questions once
@@ -133,7 +141,11 @@ export default function ChatPanel({
           onChange={(e) => setInput(e.target.value)}
           disabled={!isReady || asking}
           placeholder={
-            isReady ? "Ask about this document…" : "Waiting for processing…"
+            isReady
+              ? "Ask about this document…"
+              : isFailed
+                ? "This document failed to process"
+                : "Waiting for processing…"
           }
           className="flex-1 rounded-full border border-border bg-white px-4 py-3 text-base text-ink placeholder:text-ink-soft/70 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
         />
