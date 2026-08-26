@@ -18,6 +18,12 @@ from utils.config import DATA_DIR
 # It lives next to your uploads/vectorstores folders.
 DB_PATH = DATA_DIR / "app.db"
 
+# Defensive: SQLite can create the database FILE, but not the folder
+# containing it — a missing parent directory surfaces as the fairly
+# unhelpful "unable to open database file". Making sure it exists at
+# import time removes that whole failure mode.
+DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+
 
 @contextmanager
 def get_connection():

@@ -6,10 +6,11 @@ from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_classic.retrievers import EnsembleRetriever,ContextualCompressionRetriever
 from langchain_core.runnables import RunnableWithMessageHistory
 from langchain_cohere import CohereRerank
+from langchain_core.prompts import PromptTemplate
 from utils.llm import llm
 from utils.prompts import prompt
 from utils.vectorstore import get_embeddings
-from utils.config import SEARCH_TYPE,TOPK,VECTORSTORE_DIR,UPLOAD_DIR
+from utils.config import SEARCH_TYPE,TOPK,VECTORSTORE_DIR,UPLOAD_DIR,RETRIEVE_K
 from utils.db import DB_PATH
 from utils.keywordstore import keyword_store
 from utils.history_prompt import history_prompt
@@ -49,7 +50,7 @@ def get_session_id(session_id:str)-> BaseChatMessageHistory:
     
     return SQLChatMessageHistory(
         session_id=session_id,
-        connection=f"sqlite://{DB_PATH}"
+        connection=f"sqlite:///{DB_PATH}"
     )
 
 def _build_chain(file_name):
@@ -67,7 +68,7 @@ def _build_chain(file_name):
     
     vs_retriever = vs.as_retriever(
         search_type = SEARCH_TYPE,
-        search_kwargs={"k":TOPK}
+        search_kwargs={"k":RETRIEVE_K}
         )
 
     path = os.path.join(str(UPLOAD_DIR),file_name)
@@ -77,9 +78,12 @@ def _build_chain(file_name):
 
     keyword_retriever = keyword_store(chunks)
     hybrid_retriever = EnsembleRetriever(retrievers=[vs_retriever,keyword_retriever],weights=[0.5,0.5])
-    compressor = CohereRerank(cohere_api_key=api_key,model="rerank-english-v3.0")
+    compressor = CohereRerank(cohere_api_key=api_key,model="rerank-english-v3.0",top_n=TOPK)
     rerank_retriever = ContextualCompressionRetriever(base_compressor=compressor,base_retriever=hybrid_retriever)
-
+    document_prompt = PromptTemplate(
+        input_variables=["page_content", "source", "page_number"],
+        template="[Source: {source} | Page: {page_number}]\n{page_content}",
+    )
     qa_chain = create_stuff_documents_chain(llm,prompt)
     history_aware_retriever = create_history_aware_retriever(llm,rerank_retriever,history_prompt)
     rag_chain = create_retrieval_chain(history_aware_retriever,qa_chain)

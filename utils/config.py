@@ -11,9 +11,10 @@ VECTORSTORE_DIR.mkdir(parents=True,exist_ok=True)
 LLM_MODEL = "gpt-4o-mini"
 EMBEDDING_MODEL = "text-embedding-3-small"
 SEARCH_TYPE = "similarity"
-TOPK = 3
+TOPK = 6
+RETRIEVE_K = 20
 TEMPERATURE = 0
-MAX_NEW_TOKENS = 200
+MAX_NEW_TOKENS = 1200
 
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200

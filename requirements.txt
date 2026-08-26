@@ -11,7 +11,7 @@ langchain-core
 langchain-classic
 langchain-unstructured
 unstructured-client
-unstructured[all-docs]
+unstructured[pdf,docx,pptx]
 python-magic
 rank_bm25
 sqlalchemy

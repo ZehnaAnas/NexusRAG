@@ -15,12 +15,27 @@ WORKDIR /app
 # The Unstructured library (used to parse PDFs/docx/etc) needs real
 # OS-level tools, not just Python packages, to handle certain file
 # types -- this is exactly the category of dependency requirements.txt
-# CANNOT express. If you hit a missing-binary error for a specific
-# file type later, this is the block you'd extend.
+# CANNOT express.
+#
+#   libmagic1      - file type detection (python-magic's backend)
+#   poppler-utils  - PDF rendering/conversion
+#   tesseract-ocr  - OCR for scanned pages
+#   libgl1         - OpenCV (cv2) links against libGL.so.1 at IMPORT
+#                    time, even when doing no graphics work at all.
+#                    python:3.11-slim strips it out; without it,
+#                    `import cv2` fails and takes PDF parsing with it.
+#   libglib2.0-0t64 - the other shared library OpenCV commonly needs
+#                    alongside libGL (t64 suffix is Debian 13's name).
+#
+# If you hit another missing-.so error later, this is the block to
+# extend -- the pattern is always: read the .so name from the error,
+# find the Debian package that provides it, add it here.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libmagic1 \
     poppler-utils \
     tesseract-ocr \
+    libgl1 \
+    libglib2.0-0t64 \
     && rm -rf /var/lib/apt/lists/*
 
 # --- Dependencies BEFORE code, on purpose ---
@@ -33,18 +48,31 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # first, every single code edit would force a full reinstall.
 COPY requirements.txt .
 
-# NOTE: this project pulls in some genuinely large packages (torch,
-# for PDF layout detection) -- large enough that a slow connection
-# can time out partway through a single file. Two things make that
-# survivable instead of painful:
+# --- CPU-only torch, installed FIRST and on purpose ---
+# Unstructured's PDF layout detection depends on torch. By default,
+# pip pulls the CUDA build: torch (526MB) PLUS ~2GB of nvidia-*
+# GPU libraries (cublas, cudnn, cufft, nccl, cusolver, triton...).
+# None of it is usable here -- Docker Desktop on Windows doesn't
+# expose a GPU to containers, so all of that downloads and installs
+# purely to sit unused.
+#
+# PyTorch publishes a separate CPU-only index. Installing torch from
+# it FIRST means that when the main requirements install runs below,
+# pip sees torch is already satisfied and skips the CUDA variant
+# entirely. Cuts roughly 2GB off the download.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --timeout 120 --retries 10 \
+    --index-url https://download.pytorch.org/whl/cpu \
+    torch torchvision
+
+# NOTE: this project pulls in some genuinely large packages -- large
+# enough that a slow connection can time out partway through a single
+# file. Two things make that survivable instead of painful:
 #
 # 1. --mount=type=cache gives pip a PERSISTENT download cache across
 #    builds, without that cache ending up in the final image. If a
-#    build fails after successfully downloading torch, the NEXT
-#    build reuses that cached download instead of starting over --
-#    this replaces the --no-cache-dir approach from earlier, which
-#    traded away exactly this resilience for a smaller image. The
-#    cache mount gets us both: small final image, fast retries.
+#    build fails after successfully downloading a large file, the
+#    NEXT build reuses it instead of starting over.
 # 2. --timeout and --retries give slow/flaky connections more room
 #    before pip gives up on a single file.
 RUN --mount=type=cache,target=/root/.cache/pip \
