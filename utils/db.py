@@ -122,7 +122,7 @@ def get_status(owner: str, file_name: str) -> dict:
         "status": row["status"],
         "error": row["error"],
         "updated_at": row["updated_at"],
-    }
+    }  
 
 
 def _hash_key(raw_key: str) -> str:
